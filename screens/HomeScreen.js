@@ -46,6 +46,9 @@ const HomeScreen = ({navigation}) => {
           if (item.id === '2') {
             navigation.navigate('TinhThan');
           }
+          else if (item.id === '1') {
+            navigation.navigate('TheChat');
+          }
           setSelectedActivity(item.id);
         }}
       >
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    height: 220,
+    height: 140,
     backgroundColor: '#DDF3FF',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -152,7 +155,7 @@ const styles = StyleSheet.create({
   bannerIcon: {
     width: 140,
     height: 140,
-    marginTop: 80,
+    //marginTop: 5,
   },
   searchContainer: {
     margin: 10,
@@ -209,7 +212,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:20,
+    marginTop:1,
   },
   activityWrapper: {
     alignItems: 'center',
