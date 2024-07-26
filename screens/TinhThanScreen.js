@@ -240,11 +240,11 @@ const TinhThanScreen = ({ navigation }) => {
                 multiline
               />
               <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={updateDiaryEntry}>
-                  <Text style={styles.buttonText}>Save</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setEditModalVisible(false)}>
                   <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={updateDiaryEntry}>
+                  <Text style={styles.buttonText}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -274,11 +274,11 @@ const TinhThanScreen = ({ navigation }) => {
                 multiline
               />
               <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={addDiaryEntry}>
-                  <Text style={styles.buttonText}>Add</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setAddModalVisible(false)}>
                   <Text style={styles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={addDiaryEntry}>
+                  <Text style={styles.buttonText}>Add</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -398,6 +398,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    width:50,
   },
   filterContainer: {
     flexDirection: 'row',

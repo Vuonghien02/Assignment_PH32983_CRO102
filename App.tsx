@@ -13,6 +13,7 @@ import HomeScreen from './screens/HomeScreen';
 import Toast from 'react-native-toast-message';
 import TinhThanScreen from './screens/TinhThanScreen';
 import TheChatScreen from './screens/TheChatScreen';
+import NguNghiScreen from './screens/NguNghiScreen';
 
 
 const Stack = createStackNavigator();
@@ -64,6 +65,11 @@ const App = () => {
         <Stack.Screen 
           name='TheChat' 
           component={TheChatScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name='NguNghi' 
+          component={NguNghiScreen} 
           options={{ headerShown: false }} 
         />
       </Stack.Navigator>

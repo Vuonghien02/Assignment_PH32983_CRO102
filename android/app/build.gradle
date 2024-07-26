@@ -117,6 +117,7 @@ dependencies {
     implementation project(':react-native-vector-icons')
         implementation project(':lottie-react-native')
 implementation project(':react-native-sensors')
+implementation project(':react-native-svg')
 
 
 

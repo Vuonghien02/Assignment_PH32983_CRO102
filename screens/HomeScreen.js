@@ -49,6 +49,9 @@ const HomeScreen = ({navigation}) => {
           else if (item.id === '1') {
             navigation.navigate('TheChat');
           }
+          else if (item.id === '3') {
+            navigation.navigate('NguNghi');
+          }
           setSelectedActivity(item.id);
         }}
       >
