@@ -30,5 +30,35 @@
       "date": "2024-07-25",
       "content": "qrcqwrqe"
     }
+  ],
+  "tracks": [
+    {
+      "id": "1",
+      "url": "https://cdn.pixabay.com/audio/2024/06/14/audio_0e2636099d.mp3",
+      "title": "Nhac 1",
+      "artist": "Ca si 1",
+      "artwork": "https://cdn.pixabay.com/audio/2024/06/17/18-00-00-760_200x200.jpg"
+    },
+    {
+      "id": "2",
+      "url": "https://cdn.pixabay.com/audio/2024/07/24/audio_5ec636ca14.mp3",
+      "title": "Nhac 2",
+      "artist": "Ca si 2",
+      "artwork": "https://cdn.pixabay.com/audio/2024/03/22/19-00-46-73_200x200.jpg"
+    },
+    {
+      "id": "3",
+      "url": "https://cdn.pixabay.com/audio/2024/06/25/audio_7bfb8d2ab0.mp3",
+      "title": "Nhac 3",
+      "artist": "Ca si 3",
+      "artwork": "https://cdn.pixabay.com/audio/2024/06/25/10-06-34-296_200x200.jpg"
+    },
+    {
+      "id": "4",
+      "url": "https://cdn.pixabay.com/audio/2024/05/24/audio_46382ae035.mp3",
+      "title": "Nhac 4",
+      "artist": "Ca si 4",
+      "artwork": "https://cdn.pixabay.com/audio/2024/05/24/15-24-57-666_200x200.png"
+    }
   ]
 }
