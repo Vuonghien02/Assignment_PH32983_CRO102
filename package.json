@@ -10,15 +10,18 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-community/progress-bar-android": "^1.0.5",
     "@react-native-community/slider": "^4.5.2",
-    "@react-native-firebase/app": "^20.2.1",
-    "@react-native-firebase/auth": "^20.2.1",
+    "@react-native-firebase/app": "^20.3.0",
+    "@react-native-firebase/auth": "^20.3.0",
+    "@react-native-firebase/database": "^20.3.0",
+    "@react-native-firebase/firestore": "^20.3.0",
     "@react-native-vector-icons/fontawesome": "^4.7.0-alpha.16",
     "@react-native-vector-icons/ionicons": "^7.4.0-alpha.16",
     "@react-native-vector-icons/material-icons": "^0.0.1-alpha.16",
     "@react-navigation/drawer": "^6.7.1",
-    "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
     "axios": "^1.7.2",
     "lottie-ios": "^3.1.8",
@@ -27,6 +30,8 @@
     "react": "18.2.0",
     "react-native": "0.74.3",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-dialog": "^9.3.0",
+    "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "^2.17.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^13.0.1",
@@ -38,7 +43,9 @@
     "react-native-svg": "^15.4.0",
     "react-native-toast-message": "^2.2.0",
     "react-native-track-player": "^4.1.1",
-    "react-native-vector-icons": "^10.1.0"
+    "react-native-vector-icons": "^10.1.0",
+    "react-native-video": "^6.4.3",
+    "react-navigation": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

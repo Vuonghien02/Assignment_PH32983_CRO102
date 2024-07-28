@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 
-// Dữ liệu cho các hoạt động
 const activities = [
   { id: '1', name: 'Thể chất', icon: require('../images/icon1.png') },
   { id: '2', name: 'Tinh thần', icon: require('../images/icon2.png') },
-  { id: '3', name: 'Ngủ nghỉ', icon: require('../images/icon3.png') },
+  { id: '3', name: 'Nhạc thiền', icon: require('../images/icon3.png') },
   { id: '4', name: 'Ăn uống', icon: require('../images/icon4.png') },
-  { id: '5', name: 'Bài tập', icon: require('../images/icon5.png') },
+  { id: '5', name: 'Video Yoga', icon: require('../images/icon5.png') },
   { id: '6', name: 'Tư vấn', icon: require('../images/icon6.png') },
   { id: '7', name: 'Kết bạn', icon: require('../images/icon7.png') },
   { id: '8', name: 'Thống kê', icon: require('../images/icon8.png') },
@@ -37,7 +36,6 @@ const HomeScreen = ({navigation}) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [searchText, setSearchText] = useState('');
 
-  // Hàm render cho từng item trong FlatList
   const renderItem = ({ item }) => (
     <View style={styles.activityWrapper}>
       <TouchableOpacity
@@ -51,6 +49,15 @@ const HomeScreen = ({navigation}) => {
           }
           else if (item.id === '3') {
             navigation.navigate('NguNghi');
+          }
+          else if (item.id === '5') {
+            navigation.navigate('VideoYoga');
+          }
+          else if (item.id === '4') {
+            navigation.navigate('AnUong');
+          }
+          else if (item.id === '6') {
+            navigation.navigate('TuVan');
           }
           setSelectedActivity(item.id);
         }}
@@ -109,7 +116,7 @@ const HomeScreen = ({navigation}) => {
         <TouchableOpacity style={styles.navButton}>
           <Image source={require('../images/thongbaoicon.png')} style={styles.navIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={()=> navigation.navigate('User')}>
           <Image source={require('../images/usericon.png')} style={styles.navIcon} />
         </TouchableOpacity>
       </View>

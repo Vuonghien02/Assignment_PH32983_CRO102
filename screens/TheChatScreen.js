@@ -21,9 +21,7 @@ const TheChatScreen = ({ navigation }) => {
   const handleAccelerometerData = (x, y, z) => {
     const magnitude = Math.sqrt(x * x + y * y + z * z);
     const threshold = 1.2;
-    // if (magnitude > threshold && Math.abs(magnitude - lastMagnitude) > 0.1) {
-    //   setSteps(prevSteps => prevSteps + 1);
-    // }
+    
     setLastMagnitude(magnitude);
   };
 
@@ -78,7 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: '#ccc',
   },
   header: {
     flexDirection: 'row',

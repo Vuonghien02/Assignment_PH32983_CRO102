@@ -4,10 +4,11 @@ import TrackPlayer, { useProgress } from 'react-native-track-player';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Slider from '@react-native-community/slider';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import database from '@react-native-firebase/database';
 
-// Khởi tạo service playback
 export async function playbackService() {
-    // TODO: Attach remote event handlers
+
 }
 
 const NguNghiScreen = ({ navigation }) => {
@@ -15,39 +16,8 @@ const NguNghiScreen = ({ navigation }) => {
     const [selectedTrack, setSelectedTrack] = useState(null);
     const [favoriteTracks, setFavoriteTracks] = useState([]); // Trạng thái cho danh sách yêu thích
     const [isFavoriteModalVisible, setIsFavoriteModalVisible] = useState(false); // Trạng thái hiển thị modal yêu thích
+    const [tracks, setTracks] = useState([]); // Dữ liệu bài hát từ Firebase
     const { position, duration } = useProgress(); // Sử dụng useProgress để lấy thông tin thời gian
-
-    // Danh sách các bài hát
-    const tracks = [
-        {
-            id: '1',
-            url: 'https://cdn.pixabay.com/audio/2024/06/14/audio_0e2636099d.mp3',
-            title: 'Nhac 1',
-            artist: 'Ca si 1',
-            artwork: 'https://cdn.pixabay.com/audio/2024/06/17/18-00-00-760_200x200.jpg',
-        },
-        {
-            id: '2',
-            url: 'https://cdn.pixabay.com/audio/2024/07/24/audio_5ec636ca14.mp3',
-            title: 'Nhac 2',
-            artist: 'Ca si 2',
-            artwork: 'https://cdn.pixabay.com/audio/2024/03/22/19-00-46-73_200x200.jpg',
-        },
-        {
-            id: '3',
-            url: 'https://cdn.pixabay.com/audio/2024/06/25/audio_7bfb8d2ab0.mp3',
-            title: 'Nhac 3',
-            artist: 'Ca si 3',
-            artwork: 'https://cdn.pixabay.com/audio/2024/06/25/10-06-34-296_200x200.jpg',
-        },
-        {
-            id: '4',
-            url: 'https://cdn.pixabay.com/audio/2024/05/24/audio_46382ae035.mp3',
-            title: 'Nhac 4',
-            artist: 'Ca si 4',
-            artwork: 'https://cdn.pixabay.com/audio/2024/05/24/15-24-57-666_200x200.png',
-        }
-    ];
 
     // Hàm loại bỏ các bài trùng lặp dựa trên tiêu đề và nghệ sĩ
     const removeDuplicates = (tracks) => {
@@ -67,22 +37,83 @@ const NguNghiScreen = ({ navigation }) => {
         console.log("setup player");
         // Khởi tạo player
         await TrackPlayer.setupPlayer();
-
+    
         // Loại bỏ bài trùng lặp
         const uniqueTracks = removeDuplicates(tracks);
-
+    
         // Định nghĩa danh sách track
         const listTrack = uniqueTracks;
         // Thêm track vào player
         await TrackPlayer.add(listTrack);
-
+    
+        try {
+            const savedFavoriteTracks = await AsyncStorage.getItem('favoriteTracks');
+            const savedSelectedTrack = await AsyncStorage.getItem('selectedTrack');
+    
+            if (savedFavoriteTracks) {
+                const parsedFavoriteTracks = JSON.parse(savedFavoriteTracks);
+                // Kiểm tra dữ liệu trước khi thiết lập trạng thái
+                const validFavoriteTracks = parsedFavoriteTracks.filter(trackId => trackId !== null);
+                setFavoriteTracks(validFavoriteTracks);
+            }
+    
+            if (savedSelectedTrack) {
+                const parsedSelectedTrack = JSON.parse(savedSelectedTrack);
+                // Kiểm tra dữ liệu trước khi thiết lập trạng thái
+                if (parsedSelectedTrack !== null && parsedSelectedTrack.url) {
+                    setSelectedTrack(parsedSelectedTrack);
+                    await TrackPlayer.add(parsedSelectedTrack);
+                    setIsPlaying(true);
+                } else {
+                    console.error('Invalid track data', parsedSelectedTrack);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading saved tracks', error);
+        }
+    
         console.log("Finish setup");
     };
 
+    // Lấy dữ liệu từ Firebase Realtime Database
+    useEffect(() => {
+        const fetchTracksFromFirebase = async () => {
+            const snapshot = await database().ref('/tracks').once('value');
+            const data = snapshot.val();
+            if (data) {
+                const trackList = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key],
+                }));
+                setTracks(trackList);
+            }
+        };
+
+        fetchTracksFromFirebase();
+    }, []);
+
     useEffect(() => {
         console.log("start render");
-        setupApp();
-    }, []);
+        if (tracks.length > 0) {
+            setupApp();
+        }
+    }, [tracks]);
+
+    useEffect(() => {
+        const saveFavoriteTracks = async () => {
+            try {
+                await AsyncStorage.setItem('favoriteTracks', JSON.stringify(favoriteTracks));
+            } catch (error) {
+                console.error('Error saving favorite tracks', error);
+            }
+        };
+        saveFavoriteTracks();
+    }, [favoriteTracks]);
+    
+
+    useEffect(() => {
+        AsyncStorage.setItem('selectedTrack', JSON.stringify(selectedTrack));
+    }, [selectedTrack]);
 
     // Hàm Play/Pause
     const togglePlayback = async () => {
@@ -144,11 +175,24 @@ const NguNghiScreen = ({ navigation }) => {
 
     // Hàm chuyển đổi yêu thích
     const toggleFavorite = (track) => {
+        let updatedFavorites;
         if (favoriteTracks.includes(track.id)) {
-            setFavoriteTracks(favoriteTracks.filter(id => id !== track.id));
+            updatedFavorites = favoriteTracks.filter(id => id !== track.id);
         } else {
-            setFavoriteTracks([...favoriteTracks, track.id]);
+            updatedFavorites = [...favoriteTracks, track.id];
         }
+        setFavoriteTracks(updatedFavorites);
+
+        // Lưu danh sách yêu thích vào AsyncStorage
+        const saveFavoriteTracks = async () => {
+            try {
+                const validFavorites = updatedFavorites.filter(id => id !== null);
+                await AsyncStorage.setItem('favoriteTracks', JSON.stringify(validFavorites));
+            } catch (error) {
+                console.error('Error saving favorite tracks', error);
+            }
+        };
+        saveFavoriteTracks();
     };
 
     // Hàm kiểm tra xem bài hát có phải yêu thích hay không
@@ -166,10 +210,10 @@ const NguNghiScreen = ({ navigation }) => {
         <LinearGradient colors={['#E55F5F', '#999999']} style={styles.background}>
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Home')}>
                         <Image source={require('../images/backicon.png')} style={styles.backIcon} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>AM NHAC</Text>
+                    <Text style={styles.title}>NHẠC THIỀN</Text>
                     <TouchableOpacity onPress={toggleFavoriteModal}>
                         <Icon name="heart" size={20} color="#fff" />
                     </TouchableOpacity>
@@ -179,8 +223,7 @@ const NguNghiScreen = ({ navigation }) => {
                         style={styles.albumArt}
                         source={{ uri: selectedTrack?.artwork || 'https://cdn.pixabay.com/audio/2024/06/17/18-00-00-760_200x200.jpg' }} // Đường dẫn ảnh album
                     />
-                    <Text style={styles.title}>{selectedTrack?.title || 'Nhac 1'}</Text>
-                    <Text style={styles.artist}>{selectedTrack?.artist || 'Ca si 1'}</Text>
+                    <Text style={styles.title}>{selectedTrack?.title || 'ROCKOT'}</Text>
                 </View>
                 <View style={styles.timeContainer}>
                     <Text style={styles.timeText}>{formatTime(position)}</Text>
@@ -194,85 +237,75 @@ const NguNghiScreen = ({ navigation }) => {
                     minimumTrackTintColor="#FFFFFF"
                     maximumTrackTintColor="#000000"
                     thumbTintColor="#FFFFFF"
-                    onSlidingComplete={async (value) => {
+                    onSlidingComplete={async value => {
                         await TrackPlayer.seekTo(value);
                     }}
                 />
                 <View style={styles.controls}>
                     <TouchableOpacity onPress={playPrevTrack}>
-                        <Icon name="step-backward" size={30} color="#FFFFFF" />
+                        <Icon name="step-backward" size={30} color="#fff" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={togglePlayback}>
-                        <Icon name={isPlaying ? "pause" : "play"} size={30} color="#FFFFFF" />
+                        <Icon name={isPlaying ? 'pause' : 'play'} size={30} color="#fff" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={playNextTrack}>
-                        <Icon name="step-forward" size={30} color="#FFFFFF" />
+                        <Icon name="step-forward" size={30} color="#fff" />
                     </TouchableOpacity>
                 </View>
-                <View style={styles.playlistContainer}>
-                    <Text style={styles.playlistTitle}>Danh sách bài hát</Text>
-                    <FlatList
-                        data={removeDuplicates(tracks)}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.flatListContainer} // Thay đổi màu nền của FlatList
-                        renderItem={({ item }) => (
+                <FlatList
+                    data={tracks}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity onPress={() => selectTrack(item)}>
                             <View style={styles.trackItem}>
-                                <TouchableOpacity onPress={() => selectTrack(item)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                    <Image source={{ uri: item.artwork }} style={styles.trackImage} />
-                                    <View style={styles.trackInfo}>
-                                        <Text style={styles.trackTitle}>{item.title}</Text>
-                                        <Text style={styles.trackArtist}>{item.artist}</Text>
-                                    </View>
-                                </TouchableOpacity>
+                                <Image style={styles.trackImage} source={{ uri: item.artwork }} />
+                                <View style={styles.trackDetails}>
+                                    <Text style={styles.trackTitle}>{item.title}</Text>
+                                    <Text style={styles.trackArtist}>{item.artist}</Text>
+                                </View>
                                 <TouchableOpacity onPress={() => toggleFavorite(item)}>
-                                    <Icon
-                                        name={isFavorite(item) ? "heart" : "heart-o"}
-                                        size={20}
-                                        color={isFavorite(item) ? "#FF0000" : "#CCCCCC"}
-                                    />
+                                    <Icon name={isFavorite(item) ? 'heart' : 'heart-o'} size={20} color="#fff" />
                                 </TouchableOpacity>
                             </View>
-                        )}
-                    />
-                </View>
-            </View>
-            <Modal
-                visible={isFavoriteModalVisible}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={toggleFavoriteModal}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Danh sách yêu thích</Text>
+                        </TouchableOpacity>
+                    )}
+                />
+                <Modal visible={isFavoriteModalVisible} animationType="slide">
+                <LinearGradient colors={['#E55F5F', '#999999']} style={styles.background}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalHeader}>
+                            <TouchableOpacity onPress={toggleFavoriteModal}>
+                                <Icon name="close" size={30} color="#fff" />
+                            </TouchableOpacity>
+                            <Text style={styles.title}>Yêu thích</Text>
+                            <View style={{ width: 30 }} />
+                        </View>
                         <FlatList
                             data={favoriteTrackList}
-                            keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
-                                <View style={styles.modalTrackItem}>
-                                    <TouchableOpacity onPress={() => selectTrack(item)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                        <Image source={{ uri: item.artwork }} style={styles.modalTrackImage} />
-                                        <View style={styles.modalTrackInfo}>
-                                            <Text style={styles.modalTrackTitle}>{item.title}</Text>
-                                            <Text style={styles.modalTrackArtist}>{item.artist}</Text>
+                                <TouchableOpacity onPress={() => selectTrack(item)}>
+                                    <View style={styles.trackItem}>
+                                        <Image source={{ uri: item.artwork }} style={styles.trackImage} />
+                                        <View style={styles.trackDetails}>
+                                            <Text style={styles.trackTitle}>{item.title}</Text>
+                                            <Text style={styles.trackArtist}>{item.artist}</Text>
                                         </View>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => toggleFavorite(item)}>
-                                        <Icon
-                                            name={isFavorite(item) ? "heart" : "heart-o"}
-                                            size={24}
-                                            color={isFavorite(item) ? "#FF0000" : "#CCCCCC"}
-                                        />
-                                    </TouchableOpacity>
-                                </View>
+                                        <TouchableOpacity onPress={() => toggleFavorite(item)}>
+                                            <Icon
+                                                name={isFavorite(item) ? 'heart' : 'heart-o'}
+                                                size={20}
+                                                color={isFavorite(item) ? '#f00' : '#fff'}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                </TouchableOpacity>
                             )}
+                            keyExtractor={item => item.id}
                         />
-                        <TouchableOpacity style={styles.closeButton} onPress={toggleFavoriteModal}>
-                            <Text style={styles.closeButtonText}>Đóng</Text>
-                        </TouchableOpacity>
                     </View>
-                </View>
+                </LinearGradient>
             </Modal>
+            </View>
         </LinearGradient>
     );
 };
@@ -283,8 +316,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        padding: 20,
     },
     header: {
         flexDirection: 'row',
@@ -292,14 +324,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
+    title: {
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
     backIcon: {
         width: 30,
         height: 30,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
     },
     currentTrackInfo: {
         alignItems: 'center',
@@ -308,7 +340,6 @@ const styles = StyleSheet.create({
     albumArt: {
         width: 250,
         height: 250,
-        borderRadius: 10,
         marginBottom: 10,
     },
     artist: {
@@ -318,42 +349,38 @@ const styles = StyleSheet.create({
     slider: {
         width: '100%',
         height: 40,
+        marginBottom: 20,
+    },
+    controls: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        marginBottom: 20,
     },
     timeContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        width: '100%',
+        marginBottom: 10,
     },
     timeText: {
         color: '#fff',
-    },
-    playlistContainer: {
-        flex: 1,
-        marginTop: 10,
-        backgroundColor: '#333333',
-        padding: 10,
-        borderRadius: 10,
-    },
-    playlistTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 10,
-    },
-    flatListContainer: {
-        backgroundColor: '#333333', // Thay đổi màu nền của FlatList
     },
     trackItem: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 10,
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: '#E55F5F',
     },
     trackImage: {
         width: 50,
         height: 50,
-        borderRadius: 5,
+        borderRadius: 25,
         marginRight: 10,
     },
-    trackInfo: {
+    trackDetails: {
         flex: 1,
     },
     trackTitle: {
@@ -362,60 +389,17 @@ const styles = StyleSheet.create({
     },
     trackArtist: {
         fontSize: 14,
-        color: '#999',
-    },
-    controls: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        marginBottom: 4,
+        color: '#fff',
     },
     modalContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    },
-    modalContent: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 10,
         padding: 20,
     },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalTrackItem: {
+    modalHeader: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
-    },
-    modalTrackImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 5,
-        marginRight: 10,
-    },
-    modalTrackInfo: {
-        flex: 1,
-    },
-    modalTrackTitle: {
-        fontSize: 16,
-    },
-    modalTrackArtist: {
-        fontSize: 14,
-        color: '#999',
-    },
-    closeButton: {
-        marginTop: 20,
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        fontSize: 16,
-        color: '#007AFF',
+        marginBottom: 20,
     },
 });
 

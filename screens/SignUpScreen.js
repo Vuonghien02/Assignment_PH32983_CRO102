@@ -11,7 +11,7 @@ const SignUpScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [phone, setPhone] = useState(''); // Thêm dòng này
+  const [phone, setPhone] = useState(''); 
 
 
   const handleSignUp = async () => {
@@ -21,7 +21,6 @@ const SignUpScreen = ({ navigation }) => {
     }
     try {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-      // Cập nhật tên người dùng
       await userCredential.user.updateProfile({
         displayName: name,
       });
@@ -112,7 +111,6 @@ const SignUpScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // ... other styles
   icon: {
     marginRight: 15,
     marginLeft: 10,

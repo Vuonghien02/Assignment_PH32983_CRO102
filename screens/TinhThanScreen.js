@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, Image } from 'react-native';
-import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import database from '@react-native-firebase/database';
 
 const TinhThanScreen = ({ navigation }) => {
   const [diaryEntries, setDiaryEntries] = useState([]);
@@ -26,14 +26,16 @@ const TinhThanScreen = ({ navigation }) => {
     filterDiaryEntries();
   }, [filterYear, filterMonth, filterDay, diaryEntries]);
 
-  const fetchDiaryEntries = async () => {
-    try {
-      const response = await axios.get('http://10.0.2.2:3000/diaryEntries');
-      const sortedEntries = response.data.sort((a, b) => new Date(b.date) - new Date(a.date));
-      setDiaryEntries(sortedEntries);
-    } catch (error) {
-      console.error(error);
-    }
+  const fetchDiaryEntries = () => {
+    database()
+      .ref('/diaryEntries')
+      .once('value')
+      .then(snapshot => {
+        const entries = snapshot.val() ? Object.values(snapshot.val()) : [];
+        const sortedEntries = entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setDiaryEntries(sortedEntries);
+      })
+      .catch(error => console.error(error));
   };
 
   const filterDiaryEntries = () => {
@@ -103,8 +105,7 @@ const TinhThanScreen = ({ navigation }) => {
   const updateDiaryEntry = async () => {
     if (!selectedEntry || !newContent) return;
     try {
-      await axios.put(`http://10.0.2.2:3000/diaryEntries/${selectedEntry.id}`, {
-        ...selectedEntry,
+      await database().ref(`/diaryEntries/${selectedEntry.id}`).update({
         content: newContent,
       });
       fetchDiaryEntries();
@@ -117,11 +118,13 @@ const TinhThanScreen = ({ navigation }) => {
   const addDiaryEntry = async () => {
     if (!newEntryContent) return;
     try {
-      const response = await axios.post('http://10.0.2.2:3000/diaryEntries', {
+      const newEntryRef = database().ref('/diaryEntries').push();
+      await newEntryRef.set({
+        id: newEntryRef.key,
         date: newDate,
         content: newEntryContent,
       });
-      setDiaryEntries([response.data, ...diaryEntries]); // Thêm vào đầu danh sách
+      fetchDiaryEntries();
       setAddModalVisible(false);
       setNewEntryContent('');
     } catch (error) {
@@ -149,7 +152,7 @@ const TinhThanScreen = ({ navigation }) => {
 
   const deleteDiaryEntry = async (id) => {
     try {
-      await axios.delete(`http://10.0.2.2:3000/diaryEntries/${id}`);
+      await database().ref(`/diaryEntries/${id}`).remove();
       fetchDiaryEntries();
     } catch (error) {
       console.error(error);
@@ -157,13 +160,13 @@ const TinhThanScreen = ({ navigation }) => {
   };
 
   const handleAddButtonPress = () => {
-    const currentDate = new Date().toISOString().split('T')[0]; // Định dạng YYYY-MM-DD
+    const currentDate = new Date().toISOString().split('T')[0]; 
     setNewDate(currentDate);
     setAddModalVisible(true);
   };
 
   return (
-    <LinearGradient colors={['#9FCD65', '#999999']} style={{ flex: 1 }}>
+    <LinearGradient colors={['#ccc', '#999999']} style={{ flex: 1 }}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate('Home')}>
@@ -173,7 +176,7 @@ const TinhThanScreen = ({ navigation }) => {
             <Image style={{ width: 70, height: 70 }} source={require('../images/imgtinhthan.png')} />
           </View>
           <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(!filterVisible)}>
-            <Icon name="filter" size={24} color="#FFFFFF" />
+            <Icon name="filter" size={25} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -218,67 +221,71 @@ const TinhThanScreen = ({ navigation }) => {
               ? renderHeader(item) 
               : renderItem({ item })
           }
+          contentContainerStyle={styles.flatListContent}
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddButtonPress}>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={handleAddButtonPress}
+        >
           <Icon name="plus" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Edit Modal */}
         <Modal
           visible={editModalVisible}
-          transparent={true}
           animationType="slide"
+          transparent
           onRequestClose={() => setEditModalVisible(false)}
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Chỉnh sửa Nhật ký</Text>
               <TextInput
                 value={newContent}
                 onChangeText={setNewContent}
                 style={styles.textInput}
-                placeholder="Edit content"
                 multiline
               />
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setEditModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity onPress={updateDiaryEntry} style={[styles.modalButton, styles.updateButton]}>
+                  <Text style={styles.modalButtonText}>Cập nhật</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={updateDiaryEntry}>
-                  <Text style={styles.buttonText}>Save</Text>
+                <TouchableOpacity onPress={() => setEditModalVisible(false)} style={[styles.modalButton, styles.cancelButton]}>
+                  <Text style={styles.modalButtonText}>Hủy</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
 
-        {/* Add Modal */}
         <Modal
           visible={addModalVisible}
-          transparent={true}
           animationType="slide"
+          transparent
           onRequestClose={() => setAddModalVisible(false)}
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Thêm Nhật ký</Text>
               <TextInput
                 value={newDate}
                 onChangeText={setNewDate}
                 style={styles.textInput}
-                placeholder="Date (YYYY-MM-DD)"
+                placeholder="Ngày (YYYY-MM-DD)"
               />
               <TextInput
                 value={newEntryContent}
                 onChangeText={setNewEntryContent}
-                style={[styles.textInput, styles.contentInput]}
-                placeholder="Content"
+                style={styles.textInput}
+                placeholder="Nội dung"
                 multiline
               />
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setAddModalVisible(false)}>
-                  <Text style={styles.buttonText}>Cancel</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity onPress={addDiaryEntry} style={[styles.modalButton, styles.updateButton]}>
+                  <Text style={styles.modalButtonText}>Thêm</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={addDiaryEntry}>
-                  <Text style={styles.buttonText}>Add</Text>
+                <TouchableOpacity onPress={() => setAddModalVisible(false)} style={[styles.modalButton, styles.cancelButton]}>
+                  <Text style={styles.modalButtonText}>Hủy</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -292,137 +299,128 @@ const TinhThanScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   imageContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+  },
+  flatListContent: {
+    paddingBottom: 80,
+  },
+  headerContainer: {
+    backgroundColor: '#A0A0A0',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
     marginVertical: 10,
   },
-  diaryItem: {
-    backgroundColor: '#E0FFFF',
-    padding: 10,
-    marginVertical: 8,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  dateText: {
-    color: '#FF6347',
-    marginBottom: 5,
+  diaryItem: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   contentText: {
-    color: '#000',
-    marginBottom: 10,
+    fontSize: 16,
+    color: '#333',
+    width:'80%'
   },
   actionIcons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    flexDirection: 'column',
   },
   iconButton: {
     marginLeft: 10,
+    marginBottom:5
   },
   addButton: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
     backgroundColor: '#00BFFF',
+    borderRadius: 30,
     width: 60,
     height: 60,
-    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+  },
+  filterButton: {
+    borderRadius: 5,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
-    width: '80%',
-    alignItems: 'center',
+    width: '90%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
   textInput: {
-    height: 50,
-    width: '100%',
-    borderColor: '#000',
+    borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
+    borderRadius: 5,
     padding: 10,
+    marginBottom: 15,
+    textAlignVertical: 'top',
   },
-  shareIconButton: {
-    position: 'absolute',
-    bottom: 10,
-    left: 10,
-  },
-  contentInput: {
-    height: 100,
-  },
-  modalButtonContainer: {
+  modalButtons: {
     flexDirection: 'row',
-    marginTop: 10,
+    justifyContent: 'space-between',
   },
   modalButton: {
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    marginHorizontal: 5,
   },
-  saveButton: {
+  updateButton: {
     backgroundColor: '#00BFFF',
   },
   cancelButton: {
     backgroundColor: '#FF6347',
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    width:50,
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
   filterContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    marginBottom: 10,
   },
   filterInput: {
-    height: 40,
-    borderColor: '#000',
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius:10,
+    borderRadius: 5,
     padding: 10,
-    width: '30%',
+    flex: 1,
+    marginHorizontal: 5,
   },
-  headerContainer: {
-    backgroundColor: '#F0F8FF',
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 10,
-  },
-  headerText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#00BFFF',
+  backIcon: {
+    width: 24,
+    height: 24,
   },
 });
 

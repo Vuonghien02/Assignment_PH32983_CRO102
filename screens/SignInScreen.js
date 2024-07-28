@@ -11,7 +11,7 @@ const SignInScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false); // State để quản lý trạng thái của hộp thoại
+  const [isModalVisible, setIsModalVisible] = useState(false); 
   const [resetEmail, setResetEmail] = useState('');
   const [fullName, setFullName] = useState('');
 
@@ -22,12 +22,14 @@ const SignInScreen = ({ navigation }) => {
     }
     try {
       await auth().signInWithEmailAndPassword(email, password);
-      //Alert.alert('Welcome', 'Đăng nhập thành công!');
-  
-      // Sử dụng setTimeout để điều hướng sau 1 giây (1000ms)
-      setTimeout(() => {
+      // Kiểm tra email và điều hướng đến màn hình tương ứng
+      if (email === 'bacsi1@gmail.com') {
+        navigation.navigate('BacSiChat'); 
+      } else if (email === 'hvuongdinh293@gmail.com') {
         navigation.navigate('Home');
-      }, 50); // Thay đổi thời gian nếu cần
+      } else {
+        Alert.alert('Thông báo', 'Đăng nhập thành công!');
+      }
     } catch (error) {
       if (error.code === 'auth/wrong-password') {
         Alert.alert('Login Error', 'Mật khẩu không chính xác.');
@@ -39,9 +41,10 @@ const SignInScreen = ({ navigation }) => {
     }
   };
   
+  
 
   const handleForgotPassword = () => {
-    setIsModalVisible(true); // Hiển thị hộp thoại khi nhấn vào "Forgot password"
+    setIsModalVisible(true); 
   };
 
   const handlePasswordReset = async () => {
@@ -49,7 +52,7 @@ const SignInScreen = ({ navigation }) => {
       try {
         await auth().sendPasswordResetEmail(resetEmail);
         Alert.alert('Success', 'Password reset email sent!');
-        setIsModalVisible(false); // Đóng hộp thoại khi thành công
+        setIsModalVisible(false); 
       } catch (error) {
         Alert.alert('Error', error.message);
       }
@@ -153,7 +156,7 @@ const SignInScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // ... các style khác
+  
   icon: {
     marginRight: 15,
     marginLeft: 10,
