@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
-import Icon from 'react-native-vector-icons/Ionicons';
+import SegmentedControl from '@react-native-community/segmented-control';
 
-const workouts = [
+const allWorkouts = [
   {
     id: '1',
     title: 'Beginner Vinyasa Yoga',
     difficulty: 'Easy',
     duration: '20min',
+    category: 'Weight Loss',
     videoUrl: 'https://cdn.pixabay.com/video/2024/07/16/221551_large.mp4',
     backgroundImage: 'https://cdn.pixabay.com/video/2022/02/24/108803-681686665_tiny.jpg',
   },
@@ -17,6 +18,7 @@ const workouts = [
     title: 'Yoga for flexibility',
     difficulty: 'Easy',
     duration: '30min',
+    category: 'Flexibility',
     videoUrl: 'https://cdn.pixabay.com/video/2023/11/21/190021-887039306_large.mp4',
     backgroundImage: 'https://cdn.pixabay.com/video/2023/11/21/190021-887039306_tiny.jpg',
   },
@@ -25,6 +27,7 @@ const workouts = [
     title: 'Yoga for strength',
     difficulty: 'Medium',
     duration: '40min',
+    category: 'Strength',
     videoUrl: 'https://cdn.pixabay.com/video/2020/02/27/32937-395456375_large.mp4',
     backgroundImage: 'https://cdn.pixabay.com/video/2020/02/27/32937-395456375_tiny.jpg',
   },
@@ -33,6 +36,7 @@ const workouts = [
     title: 'Yoga for relaxation',
     difficulty: 'Easy',
     duration: '25min',
+    category: 'Relaxation',
     videoUrl: 'https://cdn.pixabay.com/video/2022/02/24/108803-681686665_large.mp4',
     backgroundImage: 'https://cdn.pixabay.com/video/2022/02/24/108803-681686665_tiny.jpg',
   },
@@ -40,6 +44,11 @@ const workouts = [
 
 const VideoYoga = ({ navigation }) => {
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filteredWorkouts = selectedCategory === 'All' 
+    ? allWorkouts 
+    : allWorkouts.filter(workout => workout.category === selectedCategory);
 
   const renderWorkout = ({ item }) => (
     <TouchableOpacity
@@ -74,7 +83,7 @@ const VideoYoga = ({ navigation }) => {
           style={styles.headerImage}
           controls={true}
           resizeMode="contain"
-          onEnd={() => setSelectedVideo(null)} // Reset the video player when video ends
+          onEnd={() => setSelectedVideo(null)} 
         />
       ) : (
         <Image
@@ -83,13 +92,21 @@ const VideoYoga = ({ navigation }) => {
         />
       )}
 
+      <SegmentedControl
+        values={['All', 'Weight Loss', 'Flexibility', 'Strength', 'Relaxation']}
+        selectedIndex={['All', 'Weight Loss', 'Flexibility', 'Strength', 'Relaxation'].indexOf(selectedCategory)}
+        onChange={(event) => setSelectedCategory(event.nativeEvent.value)}
+        style={styles.segmentedControl}
+      />
+
       <View style={styles.contentContainer}>
         <Text style={styles.workoutsTitle}>Video hướng dẫn</Text>
         <FlatList
-          data={workouts}
+          data={filteredWorkouts}
           renderItem={renderWorkout}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
+          style={styles.flatList} 
         />
       </View>
     </View>
@@ -106,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginTop: 10,
+    marginTop: 20,
     marginBottom: 10,
     paddingHorizontal: 16,
   },
@@ -122,9 +139,10 @@ const styles = StyleSheet.create({
   headerImage: {
     width: '100%',
     height: 200,
-    backgroundColor: '#000', // Fallback color if video does not load
+    backgroundColor: '#000', 
   },
   contentContainer: {
+    flex: 1, 
     padding: 20,
     backgroundColor:'#ccc',
   },
@@ -184,6 +202,13 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+  },
+  segmentedControl: {
+    margin: 10,
+    height:50,
+  },
+  flatList: {
+    flex: 1, 
   },
 });
 

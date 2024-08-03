@@ -6,9 +6,10 @@ import Slider from '@react-native-community/slider';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
+import SegmentedControl from '@react-native-community/segmented-control';
 
 export async function playbackService() {
-
+    // Your playback service implementation
 }
 
 const NguNghiScreen = ({ navigation }) => {
@@ -17,6 +18,7 @@ const NguNghiScreen = ({ navigation }) => {
     const [favoriteTracks, setFavoriteTracks] = useState([]); // Trạng thái cho danh sách yêu thích
     const [isFavoriteModalVisible, setIsFavoriteModalVisible] = useState(false); // Trạng thái hiển thị modal yêu thích
     const [tracks, setTracks] = useState([]); // Dữ liệu bài hát từ Firebase
+    const [currentGenre, setCurrentGenre] = useState('nhac_thien'); // Thể loại nhạc hiện tại
     const { position, duration } = useProgress(); // Sử dụng useProgress để lấy thông tin thời gian
 
     // Hàm loại bỏ các bài trùng lặp dựa trên tiêu đề và nghệ sĩ
@@ -42,7 +44,7 @@ const NguNghiScreen = ({ navigation }) => {
         const uniqueTracks = removeDuplicates(tracks);
     
         // Định nghĩa danh sách track
-        const listTrack = uniqueTracks;
+        const listTrack = uniqueTracks.filter(track => track.genre === currentGenre);
         // Thêm track vào player
         await TrackPlayer.add(listTrack);
     
@@ -97,7 +99,7 @@ const NguNghiScreen = ({ navigation }) => {
         if (tracks.length > 0) {
             setupApp();
         }
-    }, [tracks]);
+    }, [tracks, currentGenre]);
 
     useEffect(() => {
         const saveFavoriteTracks = async () => {
@@ -206,6 +208,9 @@ const NguNghiScreen = ({ navigation }) => {
     // Danh sách các bài hát yêu thích
     const favoriteTrackList = tracks.filter(track => isFavorite(track));
 
+    // Lọc bài hát theo thể loại hiện tại
+    const filteredTracks = tracks.filter(track => track.genre === currentGenre);
+
     return (
         <LinearGradient colors={['#E55F5F', '#999999']} style={styles.background}>
             <View style={styles.container}>
@@ -213,17 +218,26 @@ const NguNghiScreen = ({ navigation }) => {
                     <TouchableOpacity onPress={() => navigation.navigate('Home')}>
                         <Image source={require('../images/backicon.png')} style={styles.backIcon} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>NHẠC THIỀN</Text>
+                    <Text style={styles.title}>ÂM NHẠC</Text>
                     <TouchableOpacity onPress={toggleFavoriteModal}>
                         <Icon name="heart" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
+                <SegmentedControl
+                    values={['Nhạc Thiền', 'Nhạc Chạy Bộ']}
+                    selectedIndex={currentGenre === 'nhac_thien' ? 0 : 1}
+                    onChange={event => {
+                        setCurrentGenre(event.nativeEvent.selectedSegmentIndex === 0 ? 'nhac_thien' : 'nhac_chay_bo');
+                    }}
+                    style={styles.genreTabs}
+                />
                 <View style={styles.currentTrackInfo}>
                     <Image
                         style={styles.albumArt}
-                        source={{ uri: selectedTrack?.artwork || 'https://cdn.pixabay.com/audio/2024/06/17/18-00-00-760_200x200.jpg' }} // Đường dẫn ảnh album
+                        source={{ uri: selectedTrack?.artwork || 'https://cdn.pixabay.com/photo/2017/08/30/01/01/cd-2698449_960_720.png' }}
                     />
-                    <Text style={styles.title}>{selectedTrack?.title || 'ROCKOT'}</Text>
+                    <Text style={styles.trackTitle}>{selectedTrack?.title || 'No Track Selected'}</Text>
+                    <Text style={styles.trackArtist}>{selectedTrack?.artist || ''}</Text>
                 </View>
                 <View style={styles.timeContainer}>
                     <Text style={styles.timeText}>{formatTime(position)}</Text>
@@ -231,13 +245,10 @@ const NguNghiScreen = ({ navigation }) => {
                 </View>
                 <Slider
                     style={styles.slider}
-                    value={position}
                     minimumValue={0}
                     maximumValue={duration}
-                    minimumTrackTintColor="#FFFFFF"
-                    maximumTrackTintColor="#000000"
-                    thumbTintColor="#FFFFFF"
-                    onSlidingComplete={async value => {
+                    value={position}
+                    onValueChange={async (value) => {
                         await TrackPlayer.seekTo(value);
                     }}
                 />
@@ -253,7 +264,7 @@ const NguNghiScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
                 <FlatList
-                    data={tracks}
+                    data={filteredTracks}
                     keyExtractor={item => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity onPress={() => selectTrack(item)}>
@@ -270,8 +281,13 @@ const NguNghiScreen = ({ navigation }) => {
                         </TouchableOpacity>
                     )}
                 />
-                <Modal visible={isFavoriteModalVisible} animationType="slide">
-                <LinearGradient colors={['#E55F5F', '#999999']} style={styles.background}>
+                <Modal
+                    visible={isFavoriteModalVisible}
+                    onRequestClose={toggleFavoriteModal}
+                    transparent={true}
+                    animationType="slide"
+                >
+                    <LinearGradient colors={['#E55F5F', '#999999']} style={styles.background}>
                     <View style={styles.modalContainer}>
                         <View style={styles.modalHeader}>
                             <TouchableOpacity onPress={toggleFavoriteModal}>
@@ -304,7 +320,7 @@ const NguNghiScreen = ({ navigation }) => {
                         />
                     </View>
                 </LinearGradient>
-            </Modal>
+                </Modal>
             </View>
         </LinearGradient>
     );
@@ -322,49 +338,47 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 20,
-        color: '#fff',
-        fontWeight: 'bold',
+        marginTop:10,
     },
     backIcon: {
         width: 30,
         height: 30,
     },
+    title: {
+        fontSize: 20,
+        color: '#fff',
+    },
+    genreTabs: {
+        marginVertical: 20,
+    },
     currentTrackInfo: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginVertical: 20,
     },
     albumArt: {
         width: 250,
         height: 250,
-        marginBottom: 10,
+        borderRadius: 125,
     },
-    artist: {
+    trackTitle: {
         fontSize: 18,
+        color: '#fff',
+        marginVertical: 10,
+    },
+    trackArtist: {
+        fontSize: 16,
         color: '#fff',
     },
     slider: {
         width: '100%',
         height: 40,
-        marginBottom: 20,
+        //marginVertical: 20,
     },
     controls: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
         marginBottom: 20,
-    },
-    timeContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginBottom: 10,
-    },
-    timeText: {
-        color: '#fff',
     },
     trackItem: {
         flexDirection: 'row',
@@ -391,6 +405,15 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#fff',
     },
+    timeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    timeText: {
+        color: '#fff',
+    },
+    
     modalContainer: {
         flex: 1,
         padding: 20,
@@ -400,6 +423,27 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 20,
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        marginBottom: 10,
+    },
+    closeButton: {
+        marginTop: 20,
+        backgroundColor: '#E55F5F',
+        borderRadius: 5,
+        padding: 10,
+        alignItems: 'center',
+    },
+    closeButtonText: {
+        color: '#fff',
+        fontSize: 16,
     },
 });
 

@@ -23,12 +23,10 @@ const SignInScreen = ({ navigation }) => {
     try {
       await auth().signInWithEmailAndPassword(email, password);
       // Kiểm tra email và điều hướng đến màn hình tương ứng
-      if (email === 'bacsi1@gmail.com') {
-        navigation.navigate('BacSiChat'); 
-      } else if (email === 'hvuongdinh293@gmail.com') {
-        navigation.navigate('Home');
+      if (email === 'admin293@gmail.com' && password === 'HienVDPH32983') {
+        navigation.navigate('Management'); 
       } else {
-        Alert.alert('Thông báo', 'Đăng nhập thành công!');
+        navigation.navigate('Home');
       }
     } catch (error) {
       if (error.code === 'auth/wrong-password') {
@@ -40,8 +38,6 @@ const SignInScreen = ({ navigation }) => {
       }
     }
   };
-  
-  
 
   const handleForgotPassword = () => {
     setIsModalVisible(true); 
@@ -156,7 +152,6 @@ const SignInScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  
   icon: {
     marginRight: 15,
     marginLeft: 10,
@@ -175,13 +170,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 16,
+    marginTop: 30,
   },
   backIcon: {
     width: 40,
     height: 40,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
     flex: 1,
@@ -267,22 +263,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   modalButton: {
     backgroundColor: '#407CE2',
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 5,
-    justifyContent:'center',
-    alignItems:'center',
-    width:'100%',
-    marginTop: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   modalButtonText: {
     color: 'white',
-    justifyContent:'center',
-    alignItems:'center',
     fontSize: 16,
   },
 });

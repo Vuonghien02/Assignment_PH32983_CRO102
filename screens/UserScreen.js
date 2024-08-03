@@ -3,15 +3,16 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } fro
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Dialog from 'react-native-dialog';
+import { useTheme } from './ThemeContext'; // Import useTheme
 
 const UserScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('VuongHien');
   const [password, setPassword] = useState('');
-  const [theme, setTheme] = useState('light');
-  const [dialogVisible, setDialogVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const { theme, toggleTheme } = useTheme(); // Use Theme Context
 
   const themes = {
     light: {
@@ -32,6 +33,8 @@ const UserScreen = ({ navigation }) => {
     },
   };
 
+  const currentTheme = themes[theme];
+
   useEffect(() => {
     const fetchUserData = async (retryCount = 0) => {
       try {
@@ -51,14 +54,32 @@ const UserScreen = ({ navigation }) => {
     fetchUserData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await auth().signOut();
-      navigation.navigate('SingIn');
-    } catch (error) {
-      Alert.alert('Lỗi', 'Không thể đăng xuất. Vui lòng thử lại.');
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      'Xác nhận đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
+      [
+        {
+          text: 'Hủy',
+          onPress: () => console.log('Đăng xuất bị hủy'),
+          style: 'cancel',
+        },
+        {
+          text: 'Xác nhận',
+          onPress: async () => {
+            try {
+              await auth().signOut();
+              navigation.navigate('SingIn'); // Sửa lại tên màn hình đăng nhập nếu cần
+            } catch (error) {
+              Alert.alert('Lỗi', 'Không thể đăng xuất. Vui lòng thử lại.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
+  
 
   const handleChangePassword = async () => {
     setDialogVisible(true);
@@ -90,10 +111,8 @@ const UserScreen = ({ navigation }) => {
   };
 
   const handleChangeTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    toggleTheme(); // Toggle theme
   };
-
-  const currentTheme = themes[theme];
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
@@ -126,36 +145,33 @@ const UserScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.navButton}>
           <Image source={require('../images/thongbaoicon.png')} style={styles.navIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('User')}>
+        <TouchableOpacity style={styles.navButton}>
           <Image source={require('../images/usericon.png')} style={styles.navIcon} />
         </TouchableOpacity>
       </View>
 
       <Dialog.Container visible={dialogVisible}>
-        <Dialog.Title>Đổi mật khẩu</Dialog.Title>
+        <Dialog.Title>Đổi Mật Khẩu</Dialog.Title>
         <Dialog.Input
-          placeholder="Mật khẩu hiện tại"
+          placeholder="Nhập mật khẩu hiện tại"
           secureTextEntry
-          onChangeText={setCurrentPassword}
           value={currentPassword}
-          style={{ backgroundColor: currentTheme.inputBackground, color: currentTheme.textColor }}
+          onChangeText={setCurrentPassword}
         />
         <Dialog.Input
-          placeholder="Mật khẩu mới"
+          placeholder="Nhập mật khẩu mới"
           secureTextEntry
-          onChangeText={setNewPassword}
           value={newPassword}
-          style={{ backgroundColor: currentTheme.inputBackground, color: currentTheme.textColor }}
+          onChangeText={setNewPassword}
         />
         <Dialog.Input
-          placeholder="Nhập lại mật khẩu mới"
+          placeholder="Xác nhận mật khẩu mới"
           secureTextEntry
-          onChangeText={setConfirmNewPassword}
           value={confirmNewPassword}
-          style={{ backgroundColor: currentTheme.inputBackground, color: currentTheme.textColor }}
+          onChangeText={setConfirmNewPassword}
         />
         <Dialog.Button label="Hủy" onPress={() => setDialogVisible(false)} />
-        <Dialog.Button label="Đổi" onPress={handleDialogSubmit} />
+        <Dialog.Button label="Xác nhận" onPress={handleDialogSubmit} />
       </Dialog.Container>
     </View>
   );
@@ -164,23 +180,21 @@ const UserScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
   },
   header: {
+    height: 200,
     alignItems: 'center',
-    padding: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    justifyContent: 'center',
   },
   profilePic: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginTop: 10,
   },
   content: {
     flex: 1,
@@ -188,24 +202,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    width: '80%',
     padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
+    borderRadius: 5,
     marginVertical: 10,
+    width: '80%',
+    alignItems: 'center',
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    padding: 10,
   },
   navButton: {
-    alignItems: 'center',
+    padding: 10,
   },
   navIcon: {
     width: 30,

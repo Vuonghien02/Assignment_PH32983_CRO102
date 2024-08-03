@@ -21,6 +21,8 @@ import { ThemeProvider } from './screens/ThemeContext'; // Import ThemeProvider
 import TuVanScreen from './screens/TuVanScreen';
 import ChatScreen from './screens/ChatScreen';
 import BacSiChat from './screens/BacSiChat';
+import ManagementScreen from './screens/ManagementScreen';
+import MusicManagerScreen from './screens/MusicManagerScreen';
 
 
 
@@ -110,6 +112,16 @@ const App = () => {
           <Stack.Screen
             name='BacSiChat'
             component={BacSiChat}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name='Management'
+            component={ManagementScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name='MusicManager'
+            component={MusicManagerScreen}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>

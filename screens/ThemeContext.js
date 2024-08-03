@@ -1,27 +1,13 @@
 // ThemeContext.js
-import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useContext } from 'react';
 
-export const ThemeContext = createContext();
+const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light'); // Giá trị theme mặc định
+  const [theme, setTheme] = useState('light');
 
-  useEffect(() => {
-    const getTheme = async () => {
-      const savedTheme = await AsyncStorage.getItem('theme');
-      if (savedTheme) {
-        setTheme(savedTheme);
-      }
-    };
-    getTheme();
-  }, []);
-
-  const toggleTheme = async () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    // Lưu theme vào AsyncStorage
-    await AsyncStorage.setItem('theme', newTheme);
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -30,3 +16,5 @@ export const ThemeProvider = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
+
+export const useTheme = () => useContext(ThemeContext);

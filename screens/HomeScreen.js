@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { useTheme } from './ThemeContext';
 
 const activities = [
   { id: '1', name: 'Thể chất', icon: require('../images/icon1.png') },
   { id: '2', name: 'Tinh thần', icon: require('../images/icon2.png') },
-  { id: '3', name: 'Nhạc thiền', icon: require('../images/icon3.png') },
+  { id: '3', name: 'Âm nhạc', icon: require('../images/icon3.png') },
   { id: '4', name: 'Ăn uống', icon: require('../images/icon4.png') },
   { id: '5', name: 'Video Yoga', icon: require('../images/icon5.png') },
   { id: '6', name: 'Tư vấn', icon: require('../images/icon6.png') },
@@ -31,10 +32,32 @@ const ProgressView = () => {
     </View>
   );
 };
+const removeDiacritics = (str) => {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+
 
 const HomeScreen = ({navigation}) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const { theme } = useTheme();
+
+  const themes = {
+    light: {
+      background: '#FFF',
+      textColor: '#000',
+    },
+    dark: {
+      background: '#333',
+      textColor: '#FFF',
+    },
+  };
+
+  const currentTheme = themes[theme];
+
+  const filteredActivities = activities.filter(activity =>
+    removeDiacritics(activity.name).toLowerCase().includes(removeDiacritics(searchText).toLowerCase())
+  );
 
   const renderItem = ({ item }) => (
     <View style={styles.activityWrapper}>
@@ -67,10 +90,9 @@ const HomeScreen = ({navigation}) => {
       <Text style={styles.activityName}>{item.name}</Text>
     </View>
   );
-  
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       {/* Phần banner */}
       <View style={styles.banner}>
         <View style={styles.bannerLeft}>
@@ -87,7 +109,12 @@ const HomeScreen = ({navigation}) => {
       {/* Phần search */}
       <View style={styles.searchContainer}>
         <Image style={{ marginLeft: 30 }} source={require('../images/Search.png')} />
-        <TextInput style={{ marginLeft: 10 }} placeholder='Search..' />
+        <TextInput
+          style={{ marginLeft: 10 }}
+          placeholder='Search..'
+          value={searchText}
+          onChangeText={text => setSearchText(text)}
+        />
       </View>
 
       {/* Phần hiển thị số bước chân */}
@@ -96,7 +123,7 @@ const HomeScreen = ({navigation}) => {
       {/* Phần list các hoạt động */}
       <View style={styles.activitiesContainer}>
         <FlatList 
-          data={activities}
+          data={filteredActivities}
           renderItem={renderItem}
           keyExtractor={item => item.id}
           numColumns={3}
@@ -134,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    height: 140,
+    height: 160,
     backgroundColor: '#DDF3FF',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -222,13 +249,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:1,
+    marginTop: 1,
   },
   activityWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     margin: 10,
-    marginBottom:40,
+    marginBottom: 40,
     width: 100,
   },
   activityItem: {
